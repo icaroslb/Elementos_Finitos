@@ -1,3 +1,7 @@
+#ifndef BARRA_H
+#define BARRA_H
+
+
 #include <vector>
 
 struct forca {
@@ -19,3 +23,5 @@ public:
 	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo, std::vector <forca> nforcas) :
 	largura(nlargura), altura(naltura), profundidade(nprofundidade), material(nmaterial), tipo(ntipo), forcas(nforcas) {}
 };
+
+#endif
