@@ -27,5 +27,5 @@ float MomentoInercia (Barra &modelo) {
 }
 
 float estresseMaximo (Barra &modelo) {
-	
+	return momentoMaximo(modelo) * (modelo.altura / 2) / MomentoInercia(modelo);
 }
