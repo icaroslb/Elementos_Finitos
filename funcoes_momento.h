@@ -2,6 +2,7 @@
 #define FUNCOES_MOMENTO_H
 
 #include "Barra.h"
+#include <cmath>
 
 float momentoMaximo (Barra &modelo);
 float MomentoInercia (Barra &modelo);

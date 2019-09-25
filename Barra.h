@@ -1,15 +1,19 @@
 #ifndef BARRA_H
 #define BARRA_H
 
-
 #include <vector>
-
-struct forca {
-	float posicao, magnitude;
-};
+#include <algorithm> 
 
 #define CIRCULO 0;
 #define PARALEPIPEDO 1;
+
+struct forca {
+	float posicao, magnitude;
+
+	forca (float posi, float mag) : posicao(posi), magnitude(mag) {}
+};
+
+inline bool compararForca (forca f1, forca f2) {return (f1.posicao < f2.posicao);}
 
 class Barra {
 public:
