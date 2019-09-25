@@ -1,14 +1,24 @@
 CXX = g++
-LIBS = -lGL -lGLU -lglut
+EXE = main
 
-all: main
-main: main.cpp
-	$(CXX) -o $@ $^ $(LIBS)
+SOURCES += $(wildcard imgui-master/*.cpp)
+OBJ = objetos/
+OBJS = $(addprefix $(OBJ), $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
+CXXFLAGS = -I im_gui_openGL/
+CXXFLAGS += -g -Wall -Wformat
+LIBS = -lGL -lGLU -lglut -lm
 
-teste: funcoes_momento.o teste
+all: obj $(OBJS) funcoes_momento.o main
+obj:
+	if test ! -d objetos; then mkdir objetos; fi
+$(OBJ)%.o: imgui-master/%.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 funcoes_momento.o: funcoes_momento.cpp funcoes_momento.h
 	g++ -g -c $< -o $@
-teste: teste.cpp funcoes_momento.o
+$(EXE): $(OBJS) funcoes_momento.o main.cpp
+	$(CXX) -o $@ $^ $(LIBS)
+
+teste: obj teste.cpp funcoes_momento.o
 	g++ -o $@ $^ -lm
 
 clean:

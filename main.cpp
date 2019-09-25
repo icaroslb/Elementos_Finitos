@@ -1,10 +1,20 @@
 #include <iostream>
 #include <GL/freeglut.h>
 #include "Eigen/Geometry"
+#include "funcoes_momento.h"
+
+#include "imgui-master/imgui.h"
+#include "imgui-master/imgui_impl_glut.h"
+#include "imgui-master/imgui_impl_opengl2.h"
+
+#define FPS 60.0
 
 bool aramado = true;
 int largura = 300, altura = 300;
 double volume = 0;
+
+Barra barraInsercao(0, 0, 0, -1, -1),
+      barraResposta(0, 0, 0, -1, -1);
 
 Eigen::Vector3d frente(0.0f, 0.0f, 1.0f),
                 posi(0.0f, 0.0f, 0.0f),
@@ -21,6 +31,7 @@ void desenharCena ();
 void resize (int w, int h);
 void redesenharCena (int value);
 void teclado (unsigned char key, int x, int y);
+void menu ();
 
 int main (int argc, char *argv[]) {
     glutInit(&argc, argv);
@@ -35,23 +46,64 @@ int main (int argc, char *argv[]) {
 	glutTimerFunc(1000.0/60.0, redesenharCena, 0);
 	
 	glutCreateWindow("modelagem");
-	
-	glutDisplayFunc(desenharCena);
-	glutReshapeFunc(resize);
-	glutKeyboardFunc(teclado);
 
 	iniciar();
 
 	glutMainLoop();
+
+	// Cleanup
+    ImGui_ImplOpenGL2_Shutdown();
+    ImGui_ImplGLUT_Shutdown();
+    ImGui::DestroyContext();
 
     return 0;
 }
 
 void iniciar () {
 	glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
+
+	// Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGLUT_Init();
+    ImGui_ImplOpenGL2_Init();
+
+
+	glutDisplayFunc(desenharCena);
+	glutReshapeFunc(resize);
+	glutKeyboardFunc(teclado);
+	glutTimerFunc(1000/FPS, redesenharCena, 0);
+
+    glutMotionFunc(ImGui_ImplGLUT_MotionFunc);
+    glutPassiveMotionFunc(ImGui_ImplGLUT_MotionFunc);
+    glutMouseFunc(ImGui_ImplGLUT_MouseFunc);
+#ifdef __FREEGLUT_EXT_H__
+    glutMouseWheelFunc(ImGui_ImplGLUT_MouseWheelFunc);
+#endif
+    glutKeyboardUpFunc(ImGui_ImplGLUT_KeyboardUpFunc);
+    glutSpecialFunc(ImGui_ImplGLUT_SpecialFunc);
+    glutSpecialUpFunc(ImGui_ImplGLUT_SpecialUpFunc);
 }
 
 void desenharCena () {
+	// Start the Dear ImGui frame
+    ImGui_ImplOpenGL2_NewFrame();
+	ImGui_ImplGLUT_NewFrame();
+
+	menu();
+
+    // Rendering
+    ImGui::Render();
+    ImGuiIO& io = ImGui::GetIO();
+
 	glClearColor(0.17, 0.17, 0.17, 1.00);
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -64,16 +116,18 @@ void desenharCena () {
 	glColor3f(0.0, 0.80, 0.0);
 
 	glBegin(GL_QUADS);
-        glVertex3f(-50, 50, 0);
-        glVertex3f(-50, -50, 0);
-        glVertex3f(50, -50, 0);
-        glVertex3f(50, 50, 0);
+        glVertex3f(-barraInsercao.largura/2, barraInsercao.altura/2, 0);
+        glVertex3f(-barraInsercao.largura/2, -barraInsercao.altura/2, 0);
+        glVertex3f(barraInsercao.largura/2, -barraInsercao.altura/2, 0);
+        glVertex3f(barraInsercao.largura/2, barraInsercao.altura/2, 0);
     glEnd();
 
+	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 	glFlush();
 }
 
 void resize (int w, int h) {
+	ImGui_ImplGLUT_ReshapeFunc(w, h);
 	glViewport(0, 0, w, h);
 
 	largura = w/2;
@@ -93,6 +147,7 @@ void redesenharCena (int value) {
 }
 
 void teclado (unsigned char key, int x, int y) {
+	ImGui_ImplGLUT_KeyboardFunc(key, x, y);
 	switch (key) {
 	case 32:
 		if (aramado) {
@@ -127,4 +182,18 @@ void teclado (unsigned char key, int x, int y) {
 	default:
 	break;
 	}
+}
+
+void menu () {
+	ImGuiIO& io = ImGui::GetIO();
+
+	ImGui::SetNextWindowPos(ImVec2(0.0f, io.DisplaySize.y), 0, ImVec2(0.0f, 1.0f));
+	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x/2, 100));
+
+	ImGui::Begin("entradas", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+		ImGui::InputFloat("Largura", &barraInsercao.largura, 0.01f, 1.0f, "%.3f");
+		ImGui::InputFloat("Altura", &barraInsercao.altura, 0.01f, 1.0f, "%.3f");
+		ImGui::InputFloat("Profundidade", &barraInsercao.profundidade, 0.01f, 1.0f, "%.3f");
+	ImGui::End();
+	ImGui_ImplGLUT_InstallFuncs();
 }

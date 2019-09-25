@@ -26,6 +26,9 @@ public:
 
 	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo, std::vector <forca> nforcas) :
 	largura(nlargura), altura(naltura), profundidade(nprofundidade), material(nmaterial), tipo(ntipo), forcas(nforcas) {}
+
+	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo) :
+	largura(nlargura), altura(naltura), profundidade(nprofundidade), material(nmaterial), tipo(ntipo), forcas() {}
 };
 
 #endif
