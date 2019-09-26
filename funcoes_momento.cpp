@@ -23,7 +23,11 @@ float momentoMaximo (Barra &modelo) {
 }
 
 float MomentoInercia (Barra &modelo) {
-
+	if (modelo.tipo) {
+		return modelo.largura * std::pow(modelo.altura, 3) / 12;
+	}else{
+		return PI * std::pow(modelo.altura, 4) / 64;
+	}
 }
 
 float estresseMaximo (Barra &modelo) {
