@@ -5,7 +5,7 @@
 #include <algorithm> 
 
 #define CIRCULO 0;
-#define PARALEPIPEDO 1;
+#define RETANGULO 1;
 
 struct forca {
 	float posicao, magnitude;
