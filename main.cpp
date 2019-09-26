@@ -7,19 +7,19 @@
 #include "imgui-master/imgui_impl_glut.h"
 #include "imgui-master/imgui_impl_opengl2.h"
 
-#define FPS 60.0
+#define FPS 60.0f
 
-bool aramado = true;
-int largura = 300, altura = 300;
-double volume = 0;
+float posicaoForca = 0.0,
+      magnitudeForca = 0.0,
+	  estresseMax = 0.0;
 
 Barra barraInsercao(0, 0, 0, -1, -1),
       barraResposta(0, 0, 0, -1, -1);
 
-Eigen::Vector3d frente(0.0f, 0.0f, 1.0f),
+Eigen::Vector3d frente(0.0f, 0.0f, -1.0f),
                 posi(0.0f, 0.0f, 0.0f),
 				cima(0.0f, 1.0f, 0.0f),
-				direita = frente.cross(cima),
+				direita = cima.cross(frente),
 				lookAt = frente;
 Eigen::Vector3f ambiente(0.25, 0.25, 0.25),
                 difusa(1, 1, 1),
@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
 
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
 	
-	glutInitWindowSize(2*largura, 2*altura);
+	glutInitWindowSize(600, 600);
 	glutInitWindowPosition(100, 100);
 
 	glutTimerFunc(1000.0/60.0, redesenharCena, 0);
@@ -116,49 +116,40 @@ void desenharCena () {
 	glColor3f(0.0, 0.80, 0.0);
 
 	glBegin(GL_QUADS);
-        glVertex3f(-barraInsercao.largura/2, barraInsercao.altura/2, 0);
-        glVertex3f(-barraInsercao.largura/2, -barraInsercao.altura/2, 0);
-        glVertex3f(barraInsercao.largura/2, -barraInsercao.altura/2, 0);
-        glVertex3f(barraInsercao.largura/2, barraInsercao.altura/2, 0);
+        glVertex3f(0.0, barraInsercao.altura/2, 0);
+        glVertex3f(0.0, -barraInsercao.altura/2, 0);
+        glVertex3f(barraInsercao.largura, -barraInsercao.altura/2, 0);
+        glVertex3f(barraInsercao.largura, barraInsercao.altura/2, 0);
     glEnd();
+
+	for (forca f : barraInsercao.forcas) {
+		f.desenhar(barraInsercao.altura/2);
+	}
 
 	ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 	glFlush();
+	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 void resize (int w, int h) {
 	ImGui_ImplGLUT_ReshapeFunc(w, h);
 	glViewport(0, 0, w, h);
 
-	largura = w/2;
-	altura = h/2;
-
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(-100.0, 100.0, -100.0, 100.0, -1.0, 1.0);
+	glOrtho(-10.0, 190.0, -100.0, 100.0, -1.0, 1.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 }
 
 void redesenharCena (int value) {
-	glutSwapBuffers();
-	glutPostRedisplay();
-	glutTimerFunc(1000.0/60.0, redesenharCena, 0);
+	glutTimerFunc(1000.0/FPS, redesenharCena, 0);
 }
 
 void teclado (unsigned char key, int x, int y) {
 	ImGui_ImplGLUT_KeyboardFunc(key, x, y);
 	switch (key) {
-	case 32:
-		if (aramado) {
-			glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-			aramado = false;
-		} else {
-			glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
-			aramado = true;
-		}
-	break;
-
 	case 'w':
 		posi += frente;
 		lookAt += frente;
@@ -190,10 +181,27 @@ void menu () {
 	ImGui::SetNextWindowPos(ImVec2(0.0f, io.DisplaySize.y), 0, ImVec2(0.0f, 1.0f));
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x/2, 100));
 
-	ImGui::Begin("entradas", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-		ImGui::InputFloat("Largura", &barraInsercao.largura, 0.01f, 1.0f, "%.3f");
-		ImGui::InputFloat("Altura", &barraInsercao.altura, 0.01f, 1.0f, "%.3f");
-		ImGui::InputFloat("Profundidade", &barraInsercao.profundidade, 0.01f, 1.0f, "%.3f");
+	ImGui::Begin("entradasBarra", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+		ImGui::InputFloat("Largura", &barraInsercao.largura, 0.f, 1.0f, "%.3f");
+		ImGui::InputFloat("Altura", &barraInsercao.altura, 0.f, 1.0f, "%.3f");
+		ImGui::InputFloat("Profundidade", &barraInsercao.profundidade, 0.f, 1.0f, "%.3f");
+
+		if(ImGui::Button("Calcular", ImVec2(65, 20))) {
+			estresseMaximo(barraInsercao);
+		}
+
+		ImGui::Text("Estresse máximo: %0.3f", estresseMax);
 	ImGui::End();
-	ImGui_ImplGLUT_InstallFuncs();
+
+	ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x/2, io.DisplaySize.y), 0, ImVec2(0.0f, 1.0f));
+	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x/2, 100));
+
+	ImGui::Begin("entradasForca", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+		ImGui::InputFloat("Posição", &posicaoForca, 0.f, 1.0f, "%.3f");
+		ImGui::InputFloat("Magnitude", &magnitudeForca, 0.f, 1.0f, "%.3f");
+		
+		if(ImGui::Button("Criar", ImVec2(50, 20))) {
+			barraInsercao.inserirForca(posicaoForca, magnitudeForca);
+		}
+	ImGui::End();
 }
