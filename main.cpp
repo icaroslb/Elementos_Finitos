@@ -13,8 +13,8 @@ float posicaoForca = 0.0,
       magnitudeForca = 0.0,
 	  estresseMax = 0.0;
 
-Barra barraInsercao(0, 0, 0, -1, -1),
-      barraResposta(0, 0, 0, -1, -1);
+Barra barraInsercao(0, 0, 0, 0),
+      barraResposta(0, 0, 0, 0);
 
 Eigen::Vector3d frente(0.0f, 0.0f, -1.0f),
                 posi(0.0f, 0.0f, 0.0f),
@@ -25,6 +25,9 @@ Eigen::Vector3f ambiente(0.25, 0.25, 0.25),
                 difusa(1, 1, 1),
 				especular(1, 1, 1),
 				luzPosicao(100, 100, 0);
+
+char *opcoesTipoBarra[] = {"Circulo", "Retangulo"},
+     *opcaoBarra = *opcoesTipoBarra;
 
 void iniciar ();
 void desenharCena ();
@@ -182,12 +185,38 @@ void menu () {
 	ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x/2, 100));
 
 	ImGui::Begin("entradasBarra", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBringToFrontOnFocus);
-		ImGui::InputFloat("Largura", &barraInsercao.largura, 0.f, 1.0f, "%.3f");
-		ImGui::InputFloat("Altura", &barraInsercao.altura, 0.f, 1.0f, "%.3f");
-		ImGui::InputFloat("Profundidade", &barraInsercao.profundidade, 0.f, 1.0f, "%.3f");
+		if (ImGui::BeginCombo("Tipo da barra", opcaoBarra) ) {
+			for (int n = 0; n < IM_ARRAYSIZE(opcoesTipoBarra); n++) {
+        		bool is_selected = (opcaoBarra == opcoesTipoBarra[n]); // You can store your selection however you want, outside or inside your objects
+        		if (ImGui::Selectable(opcoesTipoBarra[n], is_selected)) {
+        		    opcaoBarra = opcoesTipoBarra[n];
+					barraInsercao.tipo = n;
+				}
+        		if (is_selected) {
+					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		switch (barraInsercao.tipo) {
+		case CIRCULO:
+			ImGui::InputFloat("Largura", &barraInsercao.largura, 0.f, 1.0f, "%.3f");
+			if (ImGui::InputFloat("Raio", &barraInsercao.altura, 0.f, 1.0f, "%.3f")) {
+				barraInsercao.profundidade = barraInsercao.altura;
+			}
+		break;
+		case RETANGULO:
+			ImGui::InputFloat("Largura", &barraInsercao.largura, 0.f, 1.0f, "%.3f");
+			ImGui::InputFloat("Altura", &barraInsercao.altura, 0.f, 1.0f, "%.3f");
+			ImGui::InputFloat("Profundidade", &barraInsercao.profundidade, 0.f, 1.0f, "%.3f");
+		break;
+		default:
+		break;
+		}
 
 		if(ImGui::Button("Calcular", ImVec2(65, 20))) {
-			estresseMaximo(barraInsercao);
+			estresseMax = estresseMaximo(barraInsercao);
 		}
 
 		ImGui::Text("Estresse máximo: %0.3f", estresseMax);

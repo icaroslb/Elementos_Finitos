@@ -5,8 +5,8 @@
 #include <algorithm> 
 #include <GL/gl.h>
 
-#define CIRCULO 0;
-#define RETANGULO 1;
+#define CIRCULO 0
+#define RETANGULO 1
 
 struct forca {
 	float posicao, magnitude;
@@ -41,7 +41,7 @@ public:
 	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo, std::vector <forca> nforcas) :
 	largura(nlargura), altura(naltura), profundidade(nprofundidade), material(nmaterial), tipo(ntipo), forcas(nforcas) {}
 
-	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo) :
+	Barra(float nlargura, float naltura, float nprofundidade, float nmaterial, int ntipo = 0) :
 	largura(nlargura), altura(naltura), profundidade(nprofundidade), material(nmaterial), tipo(ntipo), forcas() {}
 
     bool inserirForca (float posicao, float magnitude) {
